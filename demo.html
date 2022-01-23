@@ -23,17 +23,17 @@
     <p>Welcome to the mini-g9 gallery! <b>Drag all the graphics!</b></p>
 
 
-    <p>This is a shameless copy of <a href="http://omrelli.ug/g9/gallery/">g9.js</a>, written in Python.
+    <p>This is a shameless copy of <a href="http://omrelli.ug/g9/">g9.js</a>, written in Python.
                                       The goal here is to show off some of the cool things you can do with <a href="https://pyodide.org/en/stable/">Pyodide</a> for running
                                       demos in the browser. </p>
 
 </p>
 
-<p> The prototype idea is that we write our graphics as standard PyTorch parameterized functions ("neural networks"). Instead of optimizing them for a loss, we instead optimize them to match the movement of the users cursor. In order to update the graphics we use backpropagation (implemented through a pure-python torch library <a href="https://minitorch.github.io/">minitorch</a>). In theory any parameterized function could be used this way. </p>
+<p> The prototype idea is that we write our graphics as standard PyTorch parameterized functions ("neural networks"). Instead of optimizing them for a loss, we instead optimize them to match the movement of the users cursor. In order to update the graphics we use backpropagation, implemented through a pure-python library <a href="https://minitorch.github.io/">minitorch</a>. In theory any parameterized NN function could be used this way. </p>
 
 
 
-<p> (The examples and text here is adapted from the g9.js examples page.)</p>
+<p> The examples and text here is adapted directly from the g9.js examples page.</p>
 
   </div>
   <script>
@@ -63,7 +63,9 @@
 
   <div class='page'>
     <h1>Basic</h1>
-    <p>A minimal example with only two points. Our render function always draws one point at (x, y), and the other point at (y, x), so when you drag one of the points, the other kind of mirrors it. </p>
+    <p>A minimal example with only two points. Our render function always draws one point at (x, y), and the other point at (y, x), so when you drag one of the points, the other kind of mirrors it. 
+      You do this by making a class where the parameters can change. The model returns of dictionary of svg objects to render. Dragging points only changes the parameters of the module.
+      </p>
   </div>
   <div class='gallery-wrap'>
     <div class='input'>
@@ -91,7 +93,8 @@ class Render(nn.Module):
   </div>
   <div class='page'>
     <h1>Rings</h1>
-    <p>Lets add a few more points and use a bit or trigonometry to arrange them into two circles. Just for fun, we make the inner points red. Try dragging the points!</p>
+    <p>Lets add a few more points and use a bit or trigonometry to arrange them into two circles. Just for fun, we make the inner points red. 
+        The target argument tells us which of the points we need to calculate on the forward pass, which helps with efficiency. Try dragging the points!</p>
   </div>
   <div class='gallery-wrap'>
     <div class='input'>

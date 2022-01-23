@@ -1,7 +1,7 @@
 
 <head>
     <title>mini-g9py Gallery | Automatically Interactive Graphics</title>
-          <script src="pyodide/pyodide.js"></script>
+          <script src="https://cdn.jsdelivr.net/pyodide/v0.19.0/full/pyodide.js"></script>
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/codemirror.min.css">
           <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/addon/edit/matchbrackets.js"></script> -->
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/theme/solarized.css">
@@ -47,7 +47,7 @@
       
         await pyodide.runPythonAsync(`
          import micropip
-         BASE_URL = "http://kermit.bounceme.net:8007/data/";
+         BASE_URL = "https://srush.github.io/g9py/data/";
          await micropip.install(f"{BASE_URL}minitorch-0.2-py3-none-any.whl")
 
          from pyodide.http import pyfetch

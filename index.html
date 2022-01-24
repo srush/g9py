@@ -63,7 +63,8 @@
       
         await pyodide.runPythonAsync(`
          import micropip
-         BASE_URL = "https://srush.github.io/g9py/";
+         # BASE_URL = "http://localhost:8007/"
+         BASE_URL = "https://srush.github.io/g9py/"
          await micropip.install(f"{BASE_URL}minitorch-0.2-py3-none-any.whl")
 
          from pyodide.http import pyfetch
@@ -100,7 +101,6 @@ class Render(nn.Module):
         return {"p1": point(p1),
                 "p2": point(p2)}
 
-
 (G9(Render())
     .align('center', 'center') 
     .insertInto('#demo-points'))
@@ -131,18 +131,21 @@ class RenderRings(nn.Module):
         r1 = self.radius
         r2 = r1 / 2
         for i in range(sides):
-            if target is not None and i != int(target[-1]): continue
+            if target is not None and i != int(target[-1]):
+                continue
             a = self.angle + i / sides * math.pi * 2
             t1 = x * (-a).cos() + y * (-a).sin()
             t2 = x * a.cos() + y * a.sin()
 
-            points["in" + str(i)] = point(r2 * t1, fill="red")
-            points["out" + str(i)] = point(r1 * t2)
+            points[f"in{i}"] = point(r2 * t1, fill="red")
+            points[f"out{i}"] = point(r1 * t2)
+            # Uncomment me
+            # points[f"inb{i}"] = point(r2 * t2 / 2, fill="blue")
         return points
+
 (G9(RenderRings())
     .align('center', 'center') 
     .insertInto('#demo-circle'))
-
         </textarea>
     </div>
     <div class='display' id='demo-circle'></div>
@@ -163,16 +166,17 @@ class Render3(nn.Module):
         self.line3 = nn.Parameter(tensor([-100, 50, 100, 50]))
 
     def forward(self, id=None):
-        points = {}
         opts = {"stroke-width" :10}
-        points["l1"] = line(self.line1, stroke = 'black', **opts)
-        points["l2"] = line(self.line2, stroke = 'red', affects= {"line2" : tensor([1, 1, 0, 0])}, **opts)
-        points["l3"] = line(self.line3, stroke ='blue', affects= {"line3" : tensor([1, 0, 0, 1])}, **opts)
-        return points
+        return {"l1": line(self.line1, stroke = 'black', **opts),
+                "l2": line(self.line2, stroke = 'red',
+                           affects= {"line2" : tensor([1, 1, 0, 0])}, **opts),
+                "l3": line(self.line3, stroke ='blue',
+                           affects= {"line3" : tensor([1, 0, 0, 1])}, **opts)}
+
 (G9(Render3())
     .align('center', 'center') 
     .insertInto('#demo-lines'))
-        </textarea>
+</textarea>
     </div>
     <div class='display' id='demo-lines'></div>
   </div> 
@@ -228,8 +232,8 @@ class RenderTongs(nn.Module):
                 r3 = rotate @ p2
                 r4 = rotate @ next2
 
-                points["l1" + str(i)] = line(from_m @ r1 + to_m @ r2, **opt)
-                points["l2" + str(i)] = line(from_m @ r3 + to_m @ r4, **opt)
+                points[f"l1{i}"] = line(from_m @ r1 + to_m @ r2, **opt)
+                points[f"l2{i}"] = line(from_m @ r3 + to_m @ r4, **opt)
             
             curx = nextx
             y1 = nexty1
@@ -265,13 +269,12 @@ class Render4(nn.Module):
         self.x3 = nn.Parameter(tensor([100]))
 
     def forward(self, id=None):
-        m = nn.max(x *  -nn.max(-x * self.x2 - y * (self.x3 - 20), 0) + y *(self.x1 + 20), 0)
-        points = {}
-        points["m"] = point(x * m, affects= {"x2" : True})
-        points["x2"] = point(x * self.x2 + 20 * y, affects= {"x2" : True})
-        points["x1"] = point(x * self.x1, fill='red')
-        points["x3"] = point(x * self.x3, fill='red')
-        return points
+        m = nn.max(x *-nn.max(-x * self.x2 - y * (self.x3 - 20), 0) + y *(self.x1 + 20), 0)
+        return {"m": point(x * m, affects= {"x2" : True}),
+                "x2": point(x * self.x2 + 20 * y, affects= {"x2" : True}),
+                "x1": point(x * self.x1, fill='red'),
+                "x3": point(x * self.x3, fill='red')}
+
 (G9(Render4())
     .align('center', 'center') 
     .insertInto('#demo-max'))
@@ -281,7 +284,8 @@ class Render4(nn.Module):
   </div> 
 
 <div class='page'>
-<h1>dragon</h1>
+  <h1>dragon</h1>
+  This one is a little slow at the moment because of minitorch overhead, but it is still neat.
 </div>
 
   <div class='gallery-wrap'>
@@ -324,10 +328,10 @@ class Render6(nn.Module):
         points["from"] = point(self.from_point)
         points["to"] = point(self.to_point)
         return points
+
 (G9(Render6())
     .align('center', 'center') 
     .insertInto('#demo-dragon'))
-
         </textarea>
     </div>
     <div class='display' id='demo-dragon'></div>
@@ -380,10 +384,10 @@ class Render7(nn.Module):
         tree(y * 200, self.startLength, tensor([-90]), 5, "")
         points["root"] = point(y * 200, affects= {"startLength":True})
         return points
+
 (G9(Render7())
     .align('center', 'center') 
     .insertInto('#demo-tree'))
-
         </textarea>
     </div>
     <div class='display' id='demo-tree'></div>

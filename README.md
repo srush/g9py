@@ -1,9 +1,9 @@
-# g9.py 
+# g9.py - Torch interactive graphics
 
-A Torch toy in the browser. Demo at https://srush.github.io/g9py/demo.html 
+A Torch toy in the browser. Demo at https://srush.github.io/g9py/
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/35882/150828237-b565f6a3-e8fe-415e-87e1-a5871276d093.gif"/>
+<a href="https://srush.github.io/g9py/"><img src="https://user-images.githubusercontent.com/35882/150828237-b565f6a3-e8fe-415e-87e1-a5871276d093.gif"/> </a>
 </p>
 
 This is a shameless copy of [g9.js](https://github.com/bijection/g9), written in Python. This prototype shows off some of the cool things you can do with Pyodide for running Python demos in the browser.

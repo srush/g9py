@@ -1,0 +1,477 @@
+
+<head>
+    <title>mini-g9py Gallery | Automatically Interactive Graphics</title>
+          <script src="https://cdn.jsdelivr.net/pyodide/v0.19.0/full/pyodide.js"></script>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/codemirror.min.css">
+          <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/addon/edit/matchbrackets.js"></script> -->
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/theme/solarized.css">
+          <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/themes/prism-solarizedlight.min.css">
+          <link rel="stylesheet" type="text/css" href="https://antimatter15.com/style/temp/test.css">
+          <link rel="stylesheet" type="text/css" href="https://omrelli.ug/g9/main.css">
+          <link rel="stylesheet" type="text/css" href="https://omrelli.ug/g9/gallery/gallery.css">
+</head>
+<body class='language-py'>
+  <div class="page">
+    <div class='header'>
+      <a href="../"><div class='splash'>
+          g9.py
+      </div></a>
+        <div class='tagline'>automatically interactive graphics - in python?</div>
+    </div>
+  </div>
+  <div class="page">
+    <p>Welcome to the g9 gallery! <b>Drag all the graphics.</b></p>
+
+
+    <p>This is a shameless copy of <a href="http://omrelli.ug/g9/">g9.js</a>, written in Python.
+      This prototype shows off some of the cool things you can do with <a href="https://pyodide.org/en/stable/">Pyodide</a> for running
+      Python demos <i>in the browser</i> with  <a href="https://minitorch.github.io/">minitorch</a>. </p>
+
+</p>
+
+<center>
+<img src="https://user-images.githubusercontent.com/35882/150828237-b565f6a3-e8fe-415e-87e1-a5871276d093.gif"/>
+</center>
+
+<h2> What is this? </h2>
+
+<ul dir="auto">
+<li>You now can run Python in the browser pretty easily.</li>
+<li>This lets us run MiniTorch (a pure Python torchlike).</li>
+<li>Autodifferentiation is really fun to play with. </li>
+</ul>
+
+
+
+<p> In g9.py you write a little renderer as a standard Torch NN. It then is optimized to match the movement of the users movment. In order to update the graphics we use backpropagation. In theory any parameterized NN function could be used this way. </p>
+
+
+
+
+
+<p> The examples and text here is adapted directly from the g9.js examples page.</p>
+
+  </div>
+  <script>
+    var pyodide
+    async function main(){
+        pyodide = await loadPyodide({
+          indexURL : "https://cdn.jsdelivr.net/pyodide/v0.19.0/full/"
+        });
+        // await pyodide.loadPackage("numpy");
+        await pyodide.loadPackage("micropip");
+      
+        await pyodide.runPythonAsync(`
+         import micropip
+         BASE_URL = "https://srush.github.io/g9py/";
+         await micropip.install(f"{BASE_URL}minitorch-0.2-py3-none-any.whl")
+
+         from pyodide.http import pyfetch
+         response = await pyfetch("g9.py")
+         with open("g9.py", "wb") as f:
+            f.write(await response.bytes())
+         `)
+        pkg = pyodide.runPython("from g9 import *");
+        return pyodide;
+    }
+    let pyodideReadyPromise = main();
+    </script>
+
+  <div class='page'>
+    <h1>Basic</h1>
+    <p>A minimal example with only two points. Our render function always draws one point at (x, y), and the other point at (y, x), so when you drag one of the points, the other kind of mirrors it. 
+      You do this by making a class where the parameters can change. The model returns of dictionary of svg objects to render. Dragging points only changes the parameters of the module.
+      </p>
+  </div>
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+        <textarea class='user'>
+flip = tensor([[0, 1],
+               [1, 0]])
+class Render(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.xy = nn.Parameter(tensor([10, 0]))
+
+    def forward(self, target=None):
+        p1 = self.xy
+        p2 = flip @ p1
+        return {"p1": point(p1),
+                "p2": point(p2)}
+
+
+(G9(Render())
+    .align('center', 'center') 
+    .insertInto('#demo-points'))
+        </textarea>
+    </div>
+    <div class='display' id='demo-points'></div>
+  </div>
+  <div class='page'>
+    <h1>Rings</h1>
+    <p>Lets add a few more points and use a bit or trigonometry to arrange them into two circles. Just for fun, we make the inner points red. 
+        The target argument tells us which of the points we need to calculate on the forward pass, which helps with efficiency. Try dragging the points!</p>
+  </div>
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+x = tensor([1, 0])
+y = tensor([0, 1])
+class RenderRings(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.radius = nn.Parameter(tensor([200]))
+        self.angle = nn.Parameter(tensor([0]))
+
+    def forward(self, target=None):
+        points = {}
+        sides = 10
+        r1 = self.radius
+        r2 = r1 / 2
+        for i in range(sides):
+            if target is not None and i != int(target[-1]): continue
+            a = self.angle + i / sides * math.pi * 2
+            t1 = x * (-a).cos() + y * (-a).sin()
+            t2 = x * a.cos() + y * a.sin()
+
+            points["in" + str(i)] = point(r2 * t1, fill="red")
+            points["out" + str(i)] = point(r1 * t2)
+        return points
+(G9(RenderRings())
+    .align('center', 'center') 
+    .insertInto('#demo-circle'))
+
+        </textarea>
+    </div>
+    <div class='display' id='demo-circle'></div>
+  </div> 
+<div class='page'>
+<h1>The affects option</h1>
+<p>All of the default shapes in g9 accept an <span class='literal'>affects</span> option, which tells them what parts of the data they can change. Here are three lines with different values of <span class='literal'>affects</span>.</p>
+</div>
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+class Render3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.line1 = nn.Parameter(tensor([-100, -50, 100, -50]))
+        self.line2 = nn.Parameter(tensor([-100, 0, 100, 0]))
+        self.line3 = nn.Parameter(tensor([-100, 50, 100, 50]))
+
+    def forward(self, id=None):
+        points = {}
+        opts = {"stroke-width" :10}
+        points["l1"] = line(self.line1, stroke = 'black', **opts)
+        points["l2"] = line(self.line2, stroke = 'red', affects= {"line2" : tensor([1, 1, 0, 0])}, **opts)
+        points["l3"] = line(self.line3, stroke ='blue', affects= {"line3" : tensor([1, 0, 0, 1])}, **opts)
+        return points
+(G9(Render3())
+    .align('center', 'center') 
+    .insertInto('#demo-lines'))
+        </textarea>
+    </div>
+    <div class='display' id='demo-lines'></div>
+  </div> 
+
+<div class='page'>
+<h1>tongs</h1>
+</div>
+
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+
+from_m = tensor([[1, 0, 0, 0], [0, 1, 0, 0]]).permute(1, 0)
+to_m = tensor([[0, 0, 1, 0], [0, 0, 0, 1]]).permute(1, 0)
+x = tensor([1, 0])
+y = tensor([0, 1])
+
+class RenderTongs(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.a = tensor([2])
+        self.b = nn.Parameter(tensor([1]))
+
+    def forward(self, target=None):
+        c = self.a.cos()[0]
+        s = self.a.sin()[0]
+        rotate = tensor([[c, -s], [s, c]])
+
+        b_sin = 100 * self.b.sin()
+        b_cos = 100 * self.b.cos() 
+        curx = 0
+        y1 = 0
+        y2 = - b_sin
+        p1 = x * curx + y * y1
+        p2 = x * curx + y * y2
+        
+        points = {}
+        if target is not None:
+            t = int(target[-1])
+        opt = {"stroke-width":10, "stroke-linecap":"round"}
+        for i in range(4):
+            dir = ((i % 2) * 2 -1)
+            nextx = curx + b_cos
+            nexty1 = y1 + dir * b_sin
+            nexty2 = y2 - dir * b_sin
+            next1 = x * nextx + y * nexty1
+            next2 = x * nextx + y * nexty2
+
+            if target is None or t == i: 
+                r1 = rotate @ p1
+                r2 = rotate @ next1 
+                r3 = rotate @ p2
+                r4 = rotate @ next2
+
+                points["l1" + str(i)] = line(from_m @ r1 + to_m @ r2, **opt)
+                points["l2" + str(i)] = line(from_m @ r3 + to_m @ r4, **opt)
+            
+            curx = nextx
+            y1 = nexty1
+            y2 = nexty2
+            p1 = next1
+            p2 = next2
+
+        return points
+(G9(RenderTongs())
+    .align('center', 'center') 
+    .insertInto('#demo-tongs'))
+
+        </textarea>
+    </div>
+    <div class='display' id='demo-tongs'></div>
+  </div> 
+
+<div class='page'>
+<h1>Using Max and Min as limits</h1>
+</div>
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+x = tensor([1, 0])
+y = tensor([0, 1])
+
+class Render4(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.x1 = nn.Parameter(tensor([-100]))
+        self.x2 = nn.Parameter(tensor([0]))
+        self.x3 = nn.Parameter(tensor([100]))
+
+    def forward(self, id=None):
+        m = nn.max(x *  -nn.max(-x * self.x2 - y * (self.x3 - 20), 0) + y *(self.x1 + 20), 0)
+        points = {}
+        points["m"] = point(x * m, affects= {"x2" : True})
+        points["x2"] = point(x * self.x2 + 20 * y, affects= {"x2" : True})
+        points["x1"] = point(x * self.x1, fill='red')
+        points["x3"] = point(x * self.x3, fill='red')
+        return points
+(G9(Render4())
+    .align('center', 'center') 
+    .insertInto('#demo-max'))
+        </textarea>
+    </div>
+    <div class='display' id='demo-max'></div>
+  </div> 
+
+<div class='page'>
+<h1>dragon</h1>
+</div>
+
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+from_m = tensor([[1, 0, 0, 0], [0, 1, 0, 0]]).permute(1, 0)
+to_m = tensor([[0, 0, 1, 0], [0, 0, 0, 1]]).permute(1, 0)
+reverse_m = tensor([[0, 1], [-1, 0]])
+    
+class Render6(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.from_point = nn.Parameter(tensor([175, 96]))
+        self.to_point = nn.Parameter(tensor([-220, 39]))
+        self.squareness = nn.Parameter(tensor([0.8]))
+        
+    def forward(self, target=None):
+        lineoptions = {
+            'stroke-width': 4,
+            'stroke-linecap':'round',
+            'affects': {"squareness": True}
+        }
+
+        points = {}
+        def dragon(from_pt, to_pt, dir, level, name=""):
+            if target is not None and not target.startswith("ln" + name):
+                return
+            if level == 0:
+                points["ln" + name] = line(from_m @ from_pt +  to_m @ to_pt, ** lineoptions)
+            
+                
+            else:
+                mid = (from_pt + to_pt + self.squareness * dir * (reverse_m @ (to_pt - from_pt))) / 2.0
+                dragon(from_pt, mid, -1, level - 1, name=name + "l")
+                dragon(mid, to_pt, 1, level - 1, name=name + "r")
+ 
+        dragon(self.from_point, self.to_point, -1, 6, name="")
+            
+        points["from"] = point(self.from_point)
+        points["to"] = point(self.to_point)
+        return points
+(G9(Render6())
+    .align('center', 'center') 
+    .insertInto('#demo-dragon'))
+
+        </textarea>
+    </div>
+    <div class='display' id='demo-dragon'></div>
+  </div> 
+<div class='page'>
+<h1>tree</h1>
+</div>
+  
+  <div class='gallery-wrap'>
+    <div class='input'>
+      <div class='run-button'>Run</div>
+      <textarea class='user'>
+from_m = tensor([[1, 0, 0, 0], [0, 1, 0, 0]]).permute(1, 0)
+to_m = tensor([[0, 0, 1, 0], [0, 0, 0, 1]]).permute(1, 0)
+x = tensor([1, 0])
+y = tensor([0, 1])
+
+class Render7(nn.Module):
+    def __init__(self):
+        super(Render7, self).__init__()
+        self.deltaAngle = nn.Parameter(tensor([33]))
+        self.startLength = nn.Parameter(tensor([75]))
+        self.attenuation = nn.Parameter(tensor([0.7]))
+        
+    def forward(self, id=None):
+        target = id
+        points = {}
+        def tree(pt, length, angle, n, name=""):
+            if (target is not None 
+                and not (target.startswith("pt"+ name)
+                         or target.startswith("line"+ name))):
+                return
+            z = (angle * math.pi) / 180
+            next = x * z.cos() + y * z.sin()
+            new_pt = pt + length * next
+            points["pt" + name] = point(new_pt, fill = "green")
+            
+            points["line" + name] = (
+                line(from_m @ pt +  to_m @ new_pt,
+                     stroke= 'brown' if n > 3 else 'green',
+                     affects= {"deltaAngle" : True, "attenuation" : True},
+                     **{'stroke-width': 5}) )
+
+            if n > 0:
+                tree(new_pt, length * self.attenuation,
+                     angle + self.deltaAngle, n-1, name+"l")
+                tree(new_pt, length * self.attenuation,
+                     angle - self.deltaAngle, n-1, name+"r")
+            
+        tree(y * 200, self.startLength, tensor([-90]), 5, "")
+        points["root"] = point(y * 200, affects= {"startLength":True})
+        return points
+(G9(Render7())
+    .align('center', 'center') 
+    .insertInto('#demo-tree'))
+
+        </textarea>
+    </div>
+    <div class='display' id='demo-tree'></div>
+  </div> 
+
+ </div>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.18.2/keymap/sublime.min.js"></script>
+
+
+<script>
+var isMac = window.navigator.platform.indexOf('Mac') !== -1
+
+
+//https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
+function inViewPort(el) {
+
+    var rect = el.getBoundingClientRect();
+
+    return rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+}
+
+;[].slice.call(document.querySelectorAll('.input')).forEach(function(i){
+
+
+    function init(){
+       var cm = CodeMirror.fromTextArea(i.querySelector('textarea'), {
+            theme: 'solarized',
+            indentUnit: 4,
+            keyMap: 'sublime',
+            lineWrapping: true
+        })
+
+        var _graphics;
+        var _intervals = [];
+
+        async function run(){
+            var _g9 = window.g9
+            var _setInterval = window.setInterval
+            var g9 = function(a,b,c) {
+                _graphics = _g9(a,b,c)
+                return _graphics
+            }
+            var setInterval = function(a,b){
+                _intervals.push(_setInterval(a,b))
+            }
+            if(_graphics && _graphics.remove) {try{_graphics.remove()}catch(e){}}
+            var _interval; while(_interval = _intervals.pop()) clearInterval(_interval);
+            let pyodide = await pyodideReadyPromise;
+            pyodide.runPythonAsync(cm.getValue());
+        }
+        
+
+        cm.setOption('extraKeys', {
+            "Cmd-Enter": run,
+            "Ctrl-Enter": run
+        })
+
+        cm.on('changes', function(){
+            _graphics && _graphics.resize()
+        })
+
+        run()
+
+        var runButton = i.querySelector('.run-button')
+        runButton.addEventListener('click', run)
+        runButton.innerHTML += isMac ? ' (Cmd-Enter)' : '(Ctrl-Enter)' 
+    }
+
+
+    if(inViewPort(i))
+        init();
+    else {
+        window.addEventListener('scroll', function tryInit(){
+            if(!inViewPort(i)) return;
+        
+            init()
+            window.removeEventListener('scroll', tryInit)
+        })
+    }
+
+})
+</script>
+
+</body>

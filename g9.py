@@ -1,6 +1,6 @@
 from js import document, window
 import copy
-from pyodide import create_proxy
+from pyodide.ffi import create_proxy
 import minitorch
 import math
 import numpy as np
